@@ -476,19 +476,20 @@ function TabCompare({ data, allYears, mob }) {
 
   return (
     <div>
+      {/* 연도별 총합 비교 테이블 */}
       <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding:mob?"0.875rem":"1.25rem", marginBottom:"0.875rem" }}>
         <div style={{ fontSize:mob?12:14, fontWeight:500, marginBottom:"1rem" }}>연도별 총합 비교</div>
-        <div style={{ overflowX:"auto" }}>
-          <table style={{ width:"100%", fontSize:mob?11:12, borderCollapse:"collapse", minWidth:360 }}>
+        <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
+          <table style={{ width:"100%", fontSize:mob?10:12, borderCollapse:"collapse", minWidth:mob?260:360 }}>
             <thead>
               <tr style={{ borderBottom:"0.5px solid var(--color-border-secondary)" }}>
-                <th style={{ padding:"6px 8px", textAlign:"left", color:"var(--color-text-secondary)", fontWeight:500 }}>항목</th>
+                <th style={{ padding:mob?"4px 5px":"6px 8px", textAlign:"left", color:"var(--color-text-secondary)", fontWeight:500, fontSize:mob?10:12, whiteSpace:"nowrap" }}>항목</th>
                 {allYears.map(y => {
                   const lm2 = Math.max(lastM(data, y, "e1_cost"), lastM(data, y, "gas1_cost"));
                   return (
-                    <th key={y} style={{ padding:"6px 8px", textAlign:"right", color:"var(--color-text-secondary)", fontWeight:500, whiteSpace:"nowrap" }}>
-                      {y}년
-                      {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, marginLeft:2, color:"#185FA5" }}>({lm2}월)</span>}
+                    <th key={y} style={{ padding:mob?"4px 5px":"6px 8px", textAlign:"right", color:"var(--color-text-secondary)", fontWeight:500, whiteSpace:"nowrap", fontSize:mob?10:12 }}>
+                      {y}
+                      {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, marginLeft:2, color:"#185FA5", display:"block" }}>({lm2}월)</span>}
                     </th>
                   );
                 })}
@@ -497,7 +498,7 @@ function TabCompare({ data, allYears, mob }) {
             <tbody>
               {rows4.map((row, ri) => (
                 <tr key={ri} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", background:row.bold?"var(--color-background-secondary)":"transparent" }}>
-                  <td style={{ padding:"6px 8px", color:row.color||"var(--color-text-primary)", fontWeight:row.bold?500:400 }}>{row.label}</td>
+                  <td style={{ padding:mob?"4px 5px":"6px 8px", color:row.color||"var(--color-text-primary)", fontWeight:row.bold?500:400, fontSize:mob?10:12, whiteSpace:"nowrap" }}>{row.label}</td>
                   {allYears.map((y, yi) => {
                     const lm2 = Math.max(lastM(data, y, "e1_cost"), lastM(data, y, "gas1_cost")) || 12;
                     const val = getVal(y, lm2, row);
@@ -505,12 +506,12 @@ function TabCompare({ data, allYears, mob }) {
                     const pval = py2 ? getVal(py2, lm2, row) : null;
                     const c = pct(val, pval);
                     return (
-                      <td key={y} style={{ padding:"6px 8px", textAlign:"right", fontWeight:row.bold?500:400 }}>
-                        {val > 0 ? fmt(val) : "-"}
+                      <td key={y} style={{ padding:mob?"4px 5px":"6px 8px", textAlign:"right", fontWeight:row.bold?500:400 }}>
+                        <div style={{ fontSize:mob?10:12 }}>{val > 0 ? fmt(val) : "-"}</div>
                         {c != null && val > 0 && (
-                          <span style={{ fontSize:10, marginLeft:3, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
-                            ({fmtP(c)})
-                          </span>
+                          <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
+                            {fmtP(c)}
+                          </div>
                         )}
                       </td>
                     );
@@ -530,17 +531,17 @@ function TabCompare({ data, allYears, mob }) {
         return (
           <div key={si} style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding:mob?"0.875rem":"1.25rem", marginBottom:"0.875rem" }}>
             <div style={{ fontSize:mob?12:13, fontWeight:500, marginBottom:"0.875rem" }}>{sec.title}</div>
-            <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%", fontSize:11, borderCollapse:"collapse", minWidth:300 }}>
+            <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
+              <table style={{ width:"100%", fontSize:mob?10:11, borderCollapse:"collapse", minWidth:mob?240:300 }}>
                 <thead>
                   <tr style={{ borderBottom:"0.5px solid var(--color-border-secondary)" }}>
-                    <th style={{ padding:"5px 7px", textAlign:"left", color:"var(--color-text-secondary)", fontWeight:500, width:36 }}>월</th>
+                    <th style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"left", color:"var(--color-text-secondary)", fontWeight:500, width:mob?28:36, fontSize:mob?10:11 }}>월</th>
                     {allYears.map(y => {
                       const lm2 = lastM(data, y, sec.f1);
                       return (
-                        <th key={y} style={{ padding:"5px 7px", textAlign:"right", color:sec.color, fontWeight:500, whiteSpace:"nowrap" }}>
-                          {y}년
-                          {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, color:"#185FA5" }}>({lm2}월)</span>}
+                        <th key={y} style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"right", color:sec.color, fontWeight:500, whiteSpace:"nowrap", fontSize:mob?10:11 }}>
+                          {y}
+                          {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, color:"#185FA5", display:"block" }}>({lm2}월)</span>}
                         </th>
                       );
                     })}
@@ -549,14 +550,14 @@ function TabCompare({ data, allYears, mob }) {
                 <tbody>
                   {trows.map((row, mi) => (
                     <tr key={mi} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", opacity:allYears.some(y => row[y]) ? 1 : 0.4 }}>
-                      <td style={{ padding:"5px 7px", fontWeight:500 }}>{row.name}</td>
+                      <td style={{ padding:mob?"4px 5px":"5px 7px", fontWeight:500, fontSize:mob?10:11 }}>{row.name}</td>
                       {allYears.map((y, yi) => {
                         const val = row[y];
                         const pval = yi > 0 ? trows[mi][allYears[yi - 1]] : null;
                         const c = pct(val, pval);
                         return (
-                          <td key={y} style={{ padding:"5px 7px", textAlign:"right" }}>
-                            <div style={{ color:val?"var(--color-text-primary)":"var(--color-text-tertiary)", fontWeight:val?500:400 }}>
+                          <td key={y} style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"right" }}>
+                            <div style={{ color:val?"var(--color-text-primary)":"var(--color-text-tertiary)", fontWeight:val?500:400, fontSize:mob?10:11 }}>
                               {val ? fmt(val) : "-"}
                             </div>
                             {c != null && val && (
@@ -570,7 +571,7 @@ function TabCompare({ data, allYears, mob }) {
                     </tr>
                   ))}
                   <tr style={{ borderTop:"1px solid var(--color-border-secondary)", background:"var(--color-background-secondary)" }}>
-                    <td style={{ padding:"5px 7px", fontSize:10, color:"var(--color-text-secondary)" }}>합계</td>
+                    <td style={{ padding:mob?"4px 5px":"5px 7px", fontSize:mob?9:10, color:"var(--color-text-secondary)" }}>합계</td>
                     {allYears.map((y, yi) => {
                       const lm2 = lastM(data, y, sec.f1) || 12;
                       const val = sumTo(data, y, sec.f1, lm2) + sumTo(data, y, sec.f2, lm2);
@@ -578,8 +579,8 @@ function TabCompare({ data, allYears, mob }) {
                       const pv = py2 ? sumTo(data, py2, sec.f1, lm2) + sumTo(data, py2, sec.f2, lm2) : null;
                       const c = pct(val, pv);
                       return (
-                        <td key={y} style={{ padding:"5px 7px", textAlign:"right" }}>
-                          <div style={{ color:sec.color, fontWeight:500 }}>{val > 0 ? fmt(val) : "-"}</div>
+                        <td key={y} style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"right" }}>
+                          <div style={{ color:sec.color, fontWeight:500, fontSize:mob?10:11 }}>{val > 0 ? fmt(val) : "-"}</div>
                           {c != null && val > 0 && (
                             <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
                               {fmtP(c)}
@@ -632,8 +633,6 @@ function TabEntry({ stored, setStored, mob }) {
   const saveFields = useCallback(async (fields, firstField) => {
     const patch = {};
     fields.forEach(f => { if (form[f] != null && form[f] !== "") patch[f] = Number(form[f]); });
-
-    // Group by sheet
     const bySheet = {};
     fields.forEach(f => {
       const sn = FIELD_TO_SHEET[f];
@@ -699,7 +698,6 @@ function TabEntry({ stored, setStored, mob }) {
           </select>
         </div>
       </div>
-
       <div style={{ marginBottom: "1rem" }}>
         <div style={{ fontSize: 12, fontWeight: 500, color: "#185FA5", marginBottom: "0.625rem" }}>전기요금 (사용월 기준)</div>
         <div style={{ display: "grid", gridTemplateColumns: mob ? "1fr" : "1fr 1fr", gap: 12 }}>
@@ -744,7 +742,6 @@ function TabEntry({ stored, setStored, mob }) {
           })}
         </div>
       </div>
-
       <div style={{ marginBottom: "1.25rem" }}>
         <div style={{ fontSize:12,fontWeight:500,color:"#085041",marginBottom:"0.625rem" }}>가스요금 (사용월 기준)</div>
         <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:12 }}>
@@ -790,7 +787,6 @@ function TabEntry({ stored, setStored, mob }) {
           })}
         </div>
       </div>
-
       <div style={{ display:"flex",gap:12,alignItems:"center" }}>
         <button onClick={saveAll}
           style={{ padding:"10px 32px",fontSize:13,fontWeight:500,borderRadius:8,border:"none",background:"#534AB7",color:"#fff",cursor:"pointer",opacity:syncing?0.7:1 }}>
@@ -865,11 +861,11 @@ export default function App() {
     <div style={{ fontFamily:"var(--font-sans)", maxWidth:980, margin:"0 auto", padding:mob?"0.75rem 0.75rem 3rem":"1rem 1rem 3rem" }}>
       <div style={{ marginBottom:"1rem", display:"flex", alignItems:"flex-start", justifyContent:"space-between", flexDirection:mob?"column":"row", gap:8 }}>
         <div>
-          <div style={{ fontSize:10, color:"var(--color-text-tertiary)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>행복한교회 에너지 관리시스템</div>
-          <h1 style={{ fontSize:mob?17:21, fontWeight:500, margin:0 }}>에너지 통합 대시보드</h1>
+          <div style={{ fontSize:10, color:"var(--color-text-tertiary)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>전기, 가스요금 전기 관리 대시보드</div>
+          <h1 style={{ fontSize:mob?17:21, fontWeight:500, margin:0 }}>대한예수교장로회 행복한교회</h1>
         </div>
         <div style={{ display:"flex", gap:4, flexWrap:"wrap", alignItems:"center" }}>
-          {["전기 01-0072-8018","냉난방 01-6224-6486","가스 6000905480","가스 6000909299"].map((t,i) => (
+          {["기본전기 01-0072-8018","냉난방전기 01-6224-6486","5층가스 6000905480","냉난방가스 6000909299"].map((t,i) => (
             <span key={i} style={{ fontSize:10, padding:"3px 8px", borderRadius:20, background:i<2?"#E6F1FB":"#E1F5EE", color:i<2?"#0C447C":"#085041", fontWeight:500 }}>{t}</span>
           ))}
           <span style={{ fontSize:10, padding:"3px 8px", borderRadius:20, fontWeight:500,
@@ -906,4 +902,3 @@ export default function App() {
     </div>
   );
 }
-  
