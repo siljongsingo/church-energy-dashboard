@@ -449,65 +449,145 @@ function TabCompare({ data, allYears, mob }) {
     { label: "전기사용량(kWh)", f1: "e1_usage", f2: "e2_usage", color: "#378ADD" },
     { label: "가스사용량(m3)", f1: "gas1_usage", f2: "gas2_usage", color: "#1D9E75" },
   ];
+
   const getVal = (y, lm2, row) => {
-    if (row.bold) return ["e1_cost","e2_cost","gas1_cost","gas2_cost"].reduce((s,f) => s+sumTo(data,y,f,lm2),0);
-    return sumTo(data,y,row.f1,lm2)+sumTo(data,y,row.f2,lm2);
+    if (row.bold) {
+      return ["e1_cost","e2_cost","gas1_cost","gas2_cost"].reduce((s, f) => s + sumTo(data, y, f, lm2), 0);
+    }
+    return sumTo(data, y, row.f1, lm2) + sumTo(data, y, row.f2, lm2);
   };
-  const makeYL = (f1,f2) => MLABELS.map((m,i) => { const row={name:m}; allYears.forEach(y => { const d=data[mkey(y,i+1)]||{}; const v=(d[f1]||0)+(d[f2]||0); row[y]=v||null; }); return row; });
+
+  const makeYL = (f1, f2) => MLABELS.map((m, i) => {
+    const row = { name: m };
+    allYears.forEach(y => {
+      const d = data[mkey(y, i + 1)] || {};
+      const v = (d[f1] || 0) + (d[f2] || 0);
+      row[y] = v || null;
+    });
+    return row;
+  });
+
   const secs = [
-    {title:"월별 전기요금 합계 (원)",f1:"e1_cost",f2:"e2_cost",color:"#378ADD"},
-    {title:"월별 가스요금 합계 (원)",f1:"gas1_cost",f2:"gas2_cost",color:"#1D9E75"},
-    {title:"월별 전기사용량 합계 (kWh)",f1:"e1_usage",f2:"e2_usage",color:"#5D96CC"},
-    {title:"월별 가스사용량 합계 (m3)",f1:"gas1_usage",f2:"gas2_usage",color:"#0F6E56"},
+    { title: "월별 전기요금 합계 (원)", f1: "e1_cost", f2: "e2_cost", color: "#378ADD" },
+    { title: "월별 가스요금 합계 (원)", f1: "gas1_cost", f2: "gas2_cost", color: "#1D9E75" },
+    { title: "월별 전기사용량 합계 (kWh)", f1: "e1_usage", f2: "e2_usage", color: "#5D96CC" },
+    { title: "월별 가스사용량 합계 (m3)", f1: "gas1_usage", f2: "gas2_usage", color: "#0F6E56" },
   ];
+
   return (
     <div>
-      <div style={{ background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:12,padding:mob?"0.875rem":"1.25rem",marginBottom:"0.875rem" }}>
-        <div style={{ fontSize:mob?12:14,fontWeight:500,marginBottom:"1rem" }}>연도별 총합 비교</div>
+      <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding:mob?"0.875rem":"1.25rem", marginBottom:"0.875rem" }}>
+        <div style={{ fontSize:mob?12:14, fontWeight:500, marginBottom:"1rem" }}>연도별 총합 비교</div>
         <div style={{ overflowX:"auto" }}>
-          <table style={{ width:"100%",fontSize:mob?11:12,borderCollapse:"collapse",minWidth:360 }}>
+          <table style={{ width:"100%", fontSize:mob?11:12, borderCollapse:"collapse", minWidth:360 }}>
             <thead>
               <tr style={{ borderBottom:"0.5px solid var(--color-border-secondary)" }}>
-                <th style={{ padding:"6px 8px",textAlign:"left",color:"var(--color-text-secondary)",fontWeight:500 }}>항목</th>
-                {allYears.map(y => { const lm2=Math.max(lastM(data,y,"e1_cost"),lastM(data,y,"gas1_cost")); return (<th key={y} style={{ padding:"6px 8px",textAlign:"right",color:"var(--color-text-secondary)",fontWeight:500,whiteSpace:"nowrap" }}>{y}년{lm2>0&&lm2<12&&<span style={{fontSize:9,marginLeft:2,color:"#185FA5"}}>({lm2}월)</span>}</th>); })}
+                <th style={{ padding:"6px 8px", textAlign:"left", color:"var(--color-text-secondary)", fontWeight:500 }}>항목</th>
+                {allYears.map(y => {
+                  const lm2 = Math.max(lastM(data, y, "e1_cost"), lastM(data, y, "gas1_cost"));
+                  return (
+                    <th key={y} style={{ padding:"6px 8px", textAlign:"right", color:"var(--color-text-secondary)", fontWeight:500, whiteSpace:"nowrap" }}>
+                      {y}년
+                      {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, marginLeft:2, color:"#185FA5" }}>({lm2}월)</span>}
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {rows4.map((row,ri) => (
-                <tr key={ri} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)",background:row.bold?"var(--color-background-secondary)":"transparent" }}>
-                  <td style={{ padding:"6px 8px",color:row.color||"var(--color-text-primary)",fontWeight:row.bold?500:400 }}>{row.label}</td>
-                  {allYears.map((y,yi) => { const lm2=Math.max(lastM(data,y,"e1_cost"),lastM(data,y,"gas1_cost"))||12; const val=getVal(y,lm2,row); const py2=allYears[yi-1]; const pval=py2?getVal(py2,lm2,row):null; const c=pct(val,pval); return (<td key={y} style={{padding:"6px 8px",textAlign:"right",fontWeight:row.bold?500:400}}>{val>0?fmt(val):"-"}{c!=null&&val>0&&<span style={{fontSize:10,marginLeft:3,color:c>0?"#A32D2D":"#3B6D11"}}>({fmtP(c)})</span>}</td>); })}
+              {rows4.map((row, ri) => (
+                <tr key={ri} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", background:row.bold?"var(--color-background-secondary)":"transparent" }}>
+                  <td style={{ padding:"6px 8px", color:row.color||"var(--color-text-primary)", fontWeight:row.bold?500:400 }}>{row.label}</td>
+                  {allYears.map((y, yi) => {
+                    const lm2 = Math.max(lastM(data, y, "e1_cost"), lastM(data, y, "gas1_cost")) || 12;
+                    const val = getVal(y, lm2, row);
+                    const py2 = allYears[yi - 1];
+                    const pval = py2 ? getVal(py2, lm2, row) : null;
+                    const c = pct(val, pval);
+                    return (
+                      <td key={y} style={{ padding:"6px 8px", textAlign:"right", fontWeight:row.bold?500:400 }}>
+                        {val > 0 ? fmt(val) : "-"}
+                        {c != null && val > 0 && (
+                          <span style={{ fontSize:10, marginLeft:3, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
+                            ({fmtP(c)})
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
       <YearLine title="연도별 월별 전기요금 비교" rows={makeYL("e1_cost","e2_cost")} years={allYears} mob={mob} unit="원" />
       <YearLine title="연도별 월별 가스요금 비교" rows={makeYL("gas1_cost","gas2_cost")} years={allYears} mob={mob} unit="원" />
-      {secs.map((sec,si) => {
-        const trows=makeYL(sec.f1,sec.f2);
+
+      {secs.map((sec, si) => {
+        const trows = makeYL(sec.f1, sec.f2);
         return (
-          <div key={si} style={{ background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:12,padding:mob?"0.875rem":"1.25rem",marginBottom:"0.875rem" }}>
-            <div style={{ fontSize:mob?12:13,fontWeight:500,marginBottom:"0.875rem" }}>{sec.title}</div>
+          <div key={si} style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding:mob?"0.875rem":"1.25rem", marginBottom:"0.875rem" }}>
+            <div style={{ fontSize:mob?12:13, fontWeight:500, marginBottom:"0.875rem" }}>{sec.title}</div>
             <div style={{ overflowX:"auto" }}>
-              <table style={{ width:"100%",fontSize:11,borderCollapse:"collapse",minWidth:300 }}>
+              <table style={{ width:"100%", fontSize:11, borderCollapse:"collapse", minWidth:300 }}>
                 <thead>
                   <tr style={{ borderBottom:"0.5px solid var(--color-border-secondary)" }}>
-                    <th style={{ padding:"5px 7px",textAlign:"left",color:"var(--color-text-secondary)",fontWeight:500,width:36 }}>월</th>
-                    {allYears.map(y => { const lm2=lastM(data,y,sec.f1); return (<th key={y} style={{padding:"5px 7px",textAlign:"right",color:sec.color,fontWeight:500,whiteSpace:"nowrap"}}>{y}년{lm2>0&&lm2<12&&<span style={{fontSize:9,color:"#185FA5"}}>({lm2}월)</span>}</th>); })}
+                    <th style={{ padding:"5px 7px", textAlign:"left", color:"var(--color-text-secondary)", fontWeight:500, width:36 }}>월</th>
+                    {allYears.map(y => {
+                      const lm2 = lastM(data, y, sec.f1);
+                      return (
+                        <th key={y} style={{ padding:"5px 7px", textAlign:"right", color:sec.color, fontWeight:500, whiteSpace:"nowrap" }}>
+                          {y}년
+                          {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, color:"#185FA5" }}>({lm2}월)</span>}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {trows.map((row,mi) => (
-                    <tr key={mi} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)",opacity:allYears.some(y=>row[y])?1:0.4 }}>
-                      <td style={{ padding:"5px 7px",fontWeight:500 }}>{row.name}</td>
-                      {allYears.map((y,yi) => { const val=row[y]; const pval=yi>0?trows[mi][allYears[yi-1]]:null; const c=pct(val,pval); return (<td key={y} style={{padding:"5px 7px",textAlign:"right"}}><div style={{color:val?"var(--color-text-primary)":"var(--color-text-tertiary)",fontWeight:val?500:400}}>{val?fmt(val):"-"}</div>{c!=null&&val&&<div style={{fontSize:9,color:c>0?"#A32D2D":"#3B6D11"}}>{fmtP(c)}</div>}</td>); })}
+                  {trows.map((row, mi) => (
+                    <tr key={mi} style={{ borderBottom:"0.5px solid var(--color-border-tertiary)", opacity:allYears.some(y => row[y]) ? 1 : 0.4 }}>
+                      <td style={{ padding:"5px 7px", fontWeight:500 }}>{row.name}</td>
+                      {allYears.map((y, yi) => {
+                        const val = row[y];
+                        const pval = yi > 0 ? trows[mi][allYears[yi - 1]] : null;
+                        const c = pct(val, pval);
+                        return (
+                          <td key={y} style={{ padding:"5px 7px", textAlign:"right" }}>
+                            <div style={{ color:val?"var(--color-text-primary)":"var(--color-text-tertiary)", fontWeight:val?500:400 }}>
+                              {val ? fmt(val) : "-"}
+                            </div>
+                            {c != null && val && (
+                              <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
+                                {fmtP(c)}
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
-                  <tr style={{ borderTop:"1px solid var(--color-border-secondary)",background:"var(--color-background-secondary)" }}>
-                    <td style={{ padding:"5px 7px",fontSize:10,color:"var(--color-text-secondary)" }}>합계</td>
-                    {allYears.map((y,yi) => { const lm2=lastM(data,y,sec.f1)||12; const val=sumTo(data,y,sec.f1,lm2)+sumTo(data,y,sec.f2,lm2); const py2=allYears[yi-1]; const pv=py2?sumTo(data,py2,sec.f1,lm2)+sumTo(data,py2,sec.f2,lm2):null; const c=pct(val,pv); return (<td key={y} style={{padding:"5px 7px",textAlign:"right"}}><div style={{color:sec.color,fontWeight:500}}>{val>0?fmt(val):"-"}</div>{c!=null&&val>0&&<div style={{fontSize:9,color:c>0?"#A32D2D":"#3B6D11"}}>{fmtP(c)}</div></td>); })}
+                  <tr style={{ borderTop:"1px solid var(--color-border-secondary)", background:"var(--color-background-secondary)" }}>
+                    <td style={{ padding:"5px 7px", fontSize:10, color:"var(--color-text-secondary)" }}>합계</td>
+                    {allYears.map((y, yi) => {
+                      const lm2 = lastM(data, y, sec.f1) || 12;
+                      const val = sumTo(data, y, sec.f1, lm2) + sumTo(data, y, sec.f2, lm2);
+                      const py2 = allYears[yi - 1];
+                      const pv = py2 ? sumTo(data, py2, sec.f1, lm2) + sumTo(data, py2, sec.f2, lm2) : null;
+                      const c = pct(val, pv);
+                      return (
+                        <td key={y} style={{ padding:"5px 7px", textAlign:"right" }}>
+                          <div style={{ color:sec.color, fontWeight:500 }}>{val > 0 ? fmt(val) : "-"}</div>
+                          {c != null && val > 0 && (
+                            <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
+                              {fmtP(c)}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 </tbody>
               </table>
