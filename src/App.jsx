@@ -16,13 +16,20 @@ const MLABELS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월",
 const SKEY = "church_energy_v11";
 const YCOL = { "2023":"#378ADD","2024":"#1D9E75","2025":"#E24B4A","2026":"#BA7517","2027":"#7F77DD" };
 
-// ★ Google Apps Script URL
+const TAB_COLORS = {
+  main:    { bg: "#534AB7", text: "#534AB7" },
+  elec:    { bg: "#378ADD", text: "#185FA5" },
+  gas:     { bg: "#1D9E75", text: "#085041" },
+  compare: { bg: "#BA7517", text: "#7A4D0A" },
+  entry:   { bg: "#E24B4A", text: "#A32D2D" },
+};
+
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzY0CeMquiKZ3uF9qfvL188fMmrE61vA-P-Ke29z2w3uEoVEZMGv8ek07gQtVaB9Fix/exec";
 
 const SHEET_CONFIG = [
-  { name: "기본전기",      fields: ["e1_usage","e1_cost"] },
-  { name: "냉난방전기",    fields: ["e2_usage","e2_cost"] },
-  { name: "5층주방가스",   fields: ["gas1_usage","gas1_heat","gas1_cost"] },
+  { name: "기본전기",       fields: ["e1_usage","e1_cost"] },
+  { name: "냉난방전기",     fields: ["e2_usage","e2_cost"] },
+  { name: "5층주방가스",    fields: ["gas1_usage","gas1_heat","gas1_cost"] },
   { name: "옥상냉난방가스", fields: ["gas2_usage","gas2_heat","gas2_cost"] },
 ];
 
@@ -236,12 +243,30 @@ function UsageLine({ title, rows, mob, cy, py, unit, cc, pc, l1, l2, clicked, on
   );
 }
 
-function MTable({ year, data, c1, c2, lbs, mob }) {
+function MTable({ year, data, c1, c2, lbs, mob, type }) {
   const lm = Math.max(...c1.fs.map((f) => lastM(data, year, f)), ...c2.fs.map((f) => lastM(data, year, f)));
   const partial = lm > 0 && lm < 12;
   const upTo = lm || 12;
-  const s1 = c1.fs.reduce((s, f) => s + sumTo(data, year, f, upTo), 0);
-  const s2 = c2.fs.reduce((s, f) => s + sumTo(data, year, f, upTo), 0);
+  const isGas = type === "gas";
+
+  // 모바일 가스탭: 열량(heat) 컬럼 제외
+  const c1fs = mob && isGas ? c1.fs.filter(f => !f.includes("heat")) : c1.fs;
+  const c1sl = mob && isGas ? c1.sl.filter((_, i) => !c1.fs[i].includes("heat")) : c1.sl;
+  const c2fs = mob && isGas ? c2.fs.filter(f => !f.includes("heat")) : c2.fs;
+  const c2sl = mob && isGas ? c2.sl.filter((_, i) => !c2.fs[i].includes("heat")) : c2.sl;
+
+  const s1 = c1fs.reduce((s, f) => s + sumTo(data, year, f, upTo), 0);
+  const s2 = c2fs.reduce((s, f) => s + sumTo(data, year, f, upTo), 0);
+
+  // 헤더 라벨 2줄 처리 (모바일)
+  const lb0 = mob ? lbs[0].replace(" (", "\n(") : lbs[0];
+  const lb1 = mob ? lbs[1].replace(" (", "\n(") : lbs[1];
+
+  // 합계 라벨 2줄 처리 (모바일)
+  const sumLabel = partial
+    ? (mob ? `1~${lm}월\n합계` : `1~${lm}월 합계`)
+    : (mob ? "연간\n합계" : "연간 합계");
+
   return (
     <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)",
       borderRadius: 12, padding: mob ? "0.875rem" : "1.25rem", marginBottom: "0.875rem" }}>
@@ -249,43 +274,45 @@ function MTable({ year, data, c1, c2, lbs, mob }) {
         <div style={{ fontSize: mob ? 12 : 14, fontWeight: 500 }}>{year}년 월별 상세</div>
         {mob && <div style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>가로 스크롤</div>}
       </div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse", minWidth: 460 }}>
+      <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <table style={{ width: "100%", fontSize: mob ? 10 : 11, borderCollapse: "collapse", minWidth: mob ? (isGas ? 280 : 300) : 460 }}>
           <thead>
             <tr>
-              <th rowSpan={2} style={{ padding: "5px 7px", textAlign: "left", color: "var(--color-text-secondary)", fontWeight: 500, verticalAlign: "middle", borderBottom: "0.5px solid var(--color-border-secondary)" }}>월</th>
-              <th colSpan={c1.fs.length} style={{ padding: "4px 7px", textAlign: "center", background: c1.bg, color: c1.tc, fontWeight: 500, fontSize: 11, borderLeft: "2px solid " + c1.bd }}>{lbs[0]}</th>
-              <th colSpan={c2.fs.length} style={{ padding: "4px 7px", textAlign: "center", background: c2.bg, color: c2.tc, fontWeight: 500, fontSize: 11, borderLeft: "2px solid " + c2.bd }}>{lbs[1]}</th>
-              <th rowSpan={2} style={{ padding: "5px 7px", textAlign: "right", fontWeight: 500, verticalAlign: "middle", borderLeft: "1px solid var(--color-border-secondary)", borderBottom: "0.5px solid var(--color-border-secondary)" }}>합계</th>
+              <th rowSpan={2} style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "left", color: "var(--color-text-secondary)", fontWeight: 500, verticalAlign: "middle", borderBottom: "0.5px solid var(--color-border-secondary)", fontSize: mob ? 10 : 11 }}>월</th>
+              <th colSpan={c1fs.length} style={{ padding: mob ? "3px 4px" : "4px 7px", textAlign: "center", background: c1.bg, color: c1.tc, fontWeight: 500, fontSize: mob ? 9 : 11, borderLeft: "2px solid " + c1.bd, whiteSpace: "pre-line", lineHeight: 1.3 }}>
+                {lb0}
+              </th>
+              <th colSpan={c2fs.length} style={{ padding: mob ? "3px 4px" : "4px 7px", textAlign: "center", background: c2.bg, color: c2.tc, fontWeight: 500, fontSize: mob ? 9 : 11, borderLeft: "2px solid " + c2.bd, whiteSpace: "pre-line", lineHeight: 1.3 }}>
+                {lb1}
+              </th>
+              <th rowSpan={2} style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", fontWeight: 500, verticalAlign: "middle", borderLeft: "1px solid var(--color-border-secondary)", borderBottom: "0.5px solid var(--color-border-secondary)", fontSize: mob ? 10 : 11 }}>합계</th>
             </tr>
             <tr style={{ borderBottom: "0.5px solid var(--color-border-secondary)" }}>
-              {c1.sl.map((l, i) => (<th key={i} style={{ padding: "4px 7px", textAlign: "right", color: c1.tc, fontWeight: 400, fontSize: 10, background: c1.bg, borderLeft: i === 0 ? "2px solid " + c1.bd : "none" }}>{l}</th>))}
-              {c2.sl.map((l, i) => (<th key={i} style={{ padding: "4px 7px", textAlign: "right", color: c2.tc, fontWeight: 400, fontSize: 10, background: c2.bg, borderLeft: i === 0 ? "2px solid " + c2.bd : "none" }}>{l}</th>))}
+              {c1sl.map((l, i) => (<th key={i} style={{ padding: mob ? "3px 4px" : "4px 7px", textAlign: "right", color: c1.tc, fontWeight: 400, fontSize: mob ? 9 : 10, background: c1.bg, borderLeft: i === 0 ? "2px solid " + c1.bd : "none" }}>{l}</th>))}
+              {c2sl.map((l, i) => (<th key={i} style={{ padding: mob ? "3px 4px" : "4px 7px", textAlign: "right", color: c2.tc, fontWeight: 400, fontSize: mob ? 9 : 10, background: c2.bg, borderLeft: i === 0 ? "2px solid " + c2.bd : "none" }}>{l}</th>))}
             </tr>
           </thead>
           <tbody>
             {MLABELS.map((m, mi) => {
               const d = data[mkey(year, mi + 1)] || {};
-              const v1 = c1.fs.map((f) => d[f] || 0);
-              const v2 = c2.fs.map((f) => d[f] || 0);
+              const v1 = c1fs.map((f) => d[f] || 0);
+              const v2 = c2fs.map((f) => d[f] || 0);
               const tot = v1.reduce((s, v) => s + v, 0) + v2.reduce((s, v) => s + v, 0);
-              const isLast = mi + 1 === lm && partial;
+              const isLatest = mi + 1 === lm && partial;
               return (
                 <tr key={mi} style={{ borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-                  <td style={{ padding: "5px 7px", fontWeight: 500 }}>
-                    {m}{isLast && <span style={{ fontSize: 9, marginLeft: 3, color: "#1D9E75", padding: "1px 4px", background: "#E1F5EE", borderRadius: 3 }}>최신</span>}
-                  </td>
-                  {v1.map((v, i) => (<td key={i} style={{ padding: "5px 7px", textAlign: "right", color: c1.tc, background: c1.cb, fontWeight: i === v1.length - 1 ? 500 : 400, borderLeft: i === 0 ? "2px solid " + c1.bd : "none" }}>{v ? fmt(v) : "-"}</td>))}
-                  {v2.map((v, i) => (<td key={i} style={{ padding: "5px 7px", textAlign: "right", color: c2.tc, background: c2.cb, fontWeight: i === v2.length - 1 ? 500 : 400, borderLeft: i === 0 ? "2px solid " + c2.bd : "none" }}>{v ? fmt(v) : "-"}</td>))}
-                  <td style={{ padding: "5px 7px", textAlign: "right", fontWeight: 500, borderLeft: "1px solid var(--color-border-secondary)" }}>{tot > 0 ? fmt(tot) : "-"}</td>
+                  <td style={{ padding: mob ? "4px 5px" : "5px 7px", fontWeight: isLatest ? 700 : 500, fontSize: mob ? 10 : 11 }}>{m}</td>
+                  {v1.map((v, i) => (<td key={i} style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", color: c1.tc, background: c1.cb, fontWeight: isLatest ? 700 : (i === v1.length - 1 ? 500 : 400), borderLeft: i === 0 ? "2px solid " + c1.bd : "none", fontSize: mob ? 10 : 11 }}>{v ? fmt(v) : "-"}</td>))}
+                  {v2.map((v, i) => (<td key={i} style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", color: c2.tc, background: c2.cb, fontWeight: isLatest ? 700 : (i === v2.length - 1 ? 500 : 400), borderLeft: i === 0 ? "2px solid " + c2.bd : "none", fontSize: mob ? 10 : 11 }}>{v ? fmt(v) : "-"}</td>))}
+                  <td style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", fontWeight: isLatest ? 700 : 500, borderLeft: "1px solid var(--color-border-secondary)", fontSize: mob ? 10 : 11 }}>{tot > 0 ? fmt(tot) : "-"}</td>
                 </tr>
               );
             })}
             <tr style={{ borderTop: "1px solid var(--color-border-secondary)", fontWeight: 500, background: "var(--color-background-secondary)" }}>
-              <td style={{ padding: "5px 7px", fontSize: 11, color: "var(--color-text-secondary)" }}>{partial ? "1~" + lm + "월" : "연간"} 합계</td>
-              {c1.fs.map((f, i) => (<td key={i} style={{ padding: "5px 7px", textAlign: "right", color: c1.bd, borderLeft: i === 0 ? "2px solid " + c1.bd : "none" }}>{fmt(sumTo(data, year, f, upTo))}</td>))}
-              {c2.fs.map((f, i) => (<td key={i} style={{ padding: "5px 7px", textAlign: "right", color: c2.bd, borderLeft: i === 0 ? "2px solid " + c2.bd : "none" }}>{fmt(sumTo(data, year, f, upTo))}</td>))}
-              <td style={{ padding: "5px 7px", textAlign: "right", borderLeft: "1px solid var(--color-border-secondary)" }}>{fmt(s1 + s2)}</td>
+              <td style={{ padding: mob ? "4px 5px" : "5px 7px", fontSize: mob ? 9 : 11, color: "var(--color-text-secondary)", whiteSpace: "pre-line", lineHeight: 1.3 }}>{sumLabel}</td>
+              {c1fs.map((f, i) => (<td key={i} style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", color: c1.bd, borderLeft: i === 0 ? "2px solid " + c1.bd : "none", fontSize: mob ? 10 : 11 }}>{fmt(sumTo(data, year, f, upTo))}</td>))}
+              {c2fs.map((f, i) => (<td key={i} style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", color: c2.bd, borderLeft: i === 0 ? "2px solid " + c2.bd : "none", fontSize: mob ? 10 : 11 }}>{fmt(sumTo(data, year, f, upTo))}</td>))}
+              <td style={{ padding: mob ? "4px 5px" : "5px 7px", textAlign: "right", borderLeft: "1px solid var(--color-border-secondary)", fontSize: mob ? 10 : 11 }}>{fmt(s1 + s2)}</td>
             </tr>
           </tbody>
         </table>
@@ -344,10 +371,11 @@ function TabMain({ data, selYear, prevYear, allYears, mob, lmAll, upTo, isPartia
           </ResponsiveContainer>
         </div>
       </div>
+      {/* 통합현황 월별 테이블 - 전년합계 % 2줄 */}
       <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, padding: mob ? "0.875rem" : "1.25rem" }}>
         <div style={{ fontSize: mob ? 12 : 14, fontWeight: 500, marginBottom: "0.875rem" }}>{selYear}년 월별 통합 요금</div>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse", minWidth: 360 }}>
+          <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse", minWidth: 320 }}>
             <thead>
               <tr style={{ borderBottom: "0.5px solid var(--color-border-secondary)" }}>
                 <th style={{ padding: "5px 7px", textAlign: "left", color: "var(--color-text-secondary)", fontWeight: 500 }}>월</th>
@@ -372,9 +400,9 @@ function TabMain({ data, selYear, prevYear, allYears, mob, lmAll, upTo, isPartia
                     <td style={{ padding: "5px 7px", textAlign: "right", background: "#F0F6FD", borderLeft: "2px solid #378ADD" }}>{ec ? fmt(ec) : "-"}</td>
                     <td style={{ padding: "5px 7px", textAlign: "right", background: "#F4FCF8", borderLeft: "2px solid #1D9E75" }}>{gc ? fmt(gc) : "-"}</td>
                     <td style={{ padding: "5px 7px", textAlign: "right", fontWeight: 500, borderLeft: "1px solid var(--color-border-secondary)" }}>{tot ? fmt(tot) : "-"}</td>
-                    <td style={{ padding: "5px 7px", textAlign: "right", color: "var(--color-text-tertiary)" }}>
-                      {ptot ? fmt(ptot) : "-"}
-                      {c != null && tot ? <span style={{ fontSize: 10, marginLeft: 3, color: c > 0 ? "#A32D2D" : "#3B6D11" }}>({fmtP(c)})</span> : null}
+                    <td style={{ padding: "5px 7px", textAlign: "right" }}>
+                      <div style={{ color: "var(--color-text-tertiary)" }}>{ptot ? fmt(ptot) : "-"}</div>
+                      {c != null && tot ? <div style={{ fontSize: 10, color: c > 0 ? "#A32D2D" : "#3B6D11" }}>{fmtP(c)}</div> : null}
                     </td>
                   </tr>
                 );
@@ -406,7 +434,7 @@ function TabElec({ data, selYear, prevYear, mob, lmE, cliE, setCliE }) {
       </div>
       <BarChart2 title={"월별 전기요금 합계 ("+selYear+"년 vs "+prevYear+"년)"} rows={barRows} mob={mob} cy={selYear} py={prevYear} cc="#378ADD" />
       <UsageLine title="월별 전기사용량 추이" rows={useRows} mob={mob} cy={selYear} py={prevYear} unit="kWh" cc="#378ADD" pc="#B5D4F4" l1="기본" l2="냉난방" clicked={cliE} onSet={setCliE} onClear={() => setCliE(null)} />
-      <MTable year={selYear} data={data} mob={mob}
+      <MTable year={selYear} data={data} mob={mob} type="elec"
         c1={{ fs:["e1_usage","e1_cost"], sl:["사용량(kWh)","요금(원)"], bg:"#EBF3FC", cb:"#F0F6FD", tc:"#0C447C", bd:"#378ADD" }}
         c2={{ fs:["e2_usage","e2_cost"], sl:["사용량(kWh)","요금(원)"], bg:"#E6F1FB", cb:"#F4F8FD", tc:"#185FA5", bd:"#5D96CC" }}
         lbs={["기본전기 (01-0072-8018)","냉난방 (01-6224-6486)"]} />
@@ -433,7 +461,7 @@ function TabGas({ data, selYear, prevYear, mob, lmG, cliG, setCliG }) {
       </div>
       <BarChart2 title={"월별 가스요금 합계 ("+selYear+"년 vs "+prevYear+"년)"} rows={barRows} mob={mob} cy={selYear} py={prevYear} cc="#1D9E75" />
       <UsageLine title="월별 가스사용량 추이" rows={useRows} mob={mob} cy={selYear} py={prevYear} unit="m3" cc="#1D9E75" pc="#9FE1CB" l1="5층" l2="옥상" clicked={cliG} onSet={setCliG} onClear={() => setCliG(null)} />
-      <MTable year={selYear} data={data} mob={mob}
+      <MTable year={selYear} data={data} mob={mob} type="gas"
         c1={{ fs:["gas1_heat","gas1_usage","gas1_cost"], sl:["열량(MJ)","사용량(m3)","요금(원)"], bg:"#E1F5EE", cb:"#F4FCF8", tc:"#085041", bd:"#1D9E75" }}
         c2={{ fs:["gas2_heat","gas2_usage","gas2_cost"], sl:["열량(MJ)","사용량(m3)","요금(원)"], bg:"#D8F2E8", cb:"#EDF8F3", tc:"#0F6E56", bd:"#0F6E56" }}
         lbs={["5층주방 (6000905480)","옥상냉난방 (6000909299)"]} />
@@ -449,34 +477,23 @@ function TabCompare({ data, allYears, mob }) {
     { label: "전기사용량(kWh)", f1: "e1_usage", f2: "e2_usage", color: "#378ADD" },
     { label: "가스사용량(m3)", f1: "gas1_usage", f2: "gas2_usage", color: "#1D9E75" },
   ];
-
   const getVal = (y, lm2, row) => {
-    if (row.bold) {
-      return ["e1_cost","e2_cost","gas1_cost","gas2_cost"].reduce((s, f) => s + sumTo(data, y, f, lm2), 0);
-    }
+    if (row.bold) return ["e1_cost","e2_cost","gas1_cost","gas2_cost"].reduce((s, f) => s + sumTo(data, y, f, lm2), 0);
     return sumTo(data, y, row.f1, lm2) + sumTo(data, y, row.f2, lm2);
   };
-
   const makeYL = (f1, f2) => MLABELS.map((m, i) => {
     const row = { name: m };
-    allYears.forEach(y => {
-      const d = data[mkey(y, i + 1)] || {};
-      const v = (d[f1] || 0) + (d[f2] || 0);
-      row[y] = v || null;
-    });
+    allYears.forEach(y => { const d = data[mkey(y, i + 1)] || {}; const v = (d[f1] || 0) + (d[f2] || 0); row[y] = v || null; });
     return row;
   });
-
   const secs = [
     { title: "월별 전기요금 합계 (원)", f1: "e1_cost", f2: "e2_cost", color: "#378ADD" },
     { title: "월별 가스요금 합계 (원)", f1: "gas1_cost", f2: "gas2_cost", color: "#1D9E75" },
     { title: "월별 전기사용량 합계 (kWh)", f1: "e1_usage", f2: "e2_usage", color: "#5D96CC" },
     { title: "월별 가스사용량 합계 (m3)", f1: "gas1_usage", f2: "gas2_usage", color: "#0F6E56" },
   ];
-
   return (
     <div>
-      {/* 연도별 총합 비교 테이블 */}
       <div style={{ background:"var(--color-background-primary)", border:"0.5px solid var(--color-border-tertiary)", borderRadius:12, padding:mob?"0.875rem":"1.25rem", marginBottom:"0.875rem" }}>
         <div style={{ fontSize:mob?12:14, fontWeight:500, marginBottom:"1rem" }}>연도별 총합 비교</div>
         <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
@@ -488,8 +505,7 @@ function TabCompare({ data, allYears, mob }) {
                   const lm2 = Math.max(lastM(data, y, "e1_cost"), lastM(data, y, "gas1_cost"));
                   return (
                     <th key={y} style={{ padding:mob?"4px 5px":"6px 8px", textAlign:"right", color:"var(--color-text-secondary)", fontWeight:500, whiteSpace:"nowrap", fontSize:mob?10:12 }}>
-                      {y}
-                      {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, marginLeft:2, color:"#185FA5", display:"block" }}>({lm2}월)</span>}
+                      {y}{lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, marginLeft:2, color:"#185FA5", display:"block" }}>({lm2}월)</span>}
                     </th>
                   );
                 })}
@@ -508,11 +524,7 @@ function TabCompare({ data, allYears, mob }) {
                     return (
                       <td key={y} style={{ padding:mob?"4px 5px":"6px 8px", textAlign:"right", fontWeight:row.bold?500:400 }}>
                         <div style={{ fontSize:mob?10:12 }}>{val > 0 ? fmt(val) : "-"}</div>
-                        {c != null && val > 0 && (
-                          <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
-                            {fmtP(c)}
-                          </div>
-                        )}
+                        {c != null && val > 0 && <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>{fmtP(c)}</div>}
                       </td>
                     );
                   })}
@@ -522,10 +534,8 @@ function TabCompare({ data, allYears, mob }) {
           </table>
         </div>
       </div>
-
       <YearLine title="연도별 월별 전기요금 비교" rows={makeYL("e1_cost","e2_cost")} years={allYears} mob={mob} unit="원" />
       <YearLine title="연도별 월별 가스요금 비교" rows={makeYL("gas1_cost","gas2_cost")} years={allYears} mob={mob} unit="원" />
-
       {secs.map((sec, si) => {
         const trows = makeYL(sec.f1, sec.f2);
         return (
@@ -540,8 +550,7 @@ function TabCompare({ data, allYears, mob }) {
                       const lm2 = lastM(data, y, sec.f1);
                       return (
                         <th key={y} style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"right", color:sec.color, fontWeight:500, whiteSpace:"nowrap", fontSize:mob?10:11 }}>
-                          {y}
-                          {lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, color:"#185FA5", display:"block" }}>({lm2}월)</span>}
+                          {y}{lm2 > 0 && lm2 < 12 && <span style={{ fontSize:9, color:"#185FA5", display:"block" }}>({lm2}월)</span>}
                         </th>
                       );
                     })}
@@ -557,14 +566,8 @@ function TabCompare({ data, allYears, mob }) {
                         const c = pct(val, pval);
                         return (
                           <td key={y} style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"right" }}>
-                            <div style={{ color:val?"var(--color-text-primary)":"var(--color-text-tertiary)", fontWeight:val?500:400, fontSize:mob?10:11 }}>
-                              {val ? fmt(val) : "-"}
-                            </div>
-                            {c != null && val && (
-                              <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
-                                {fmtP(c)}
-                              </div>
-                            )}
+                            <div style={{ color:val?"var(--color-text-primary)":"var(--color-text-tertiary)", fontWeight:val?500:400, fontSize:mob?10:11 }}>{val ? fmt(val) : "-"}</div>
+                            {c != null && val && <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>{fmtP(c)}</div>}
                           </td>
                         );
                       })}
@@ -581,11 +584,7 @@ function TabCompare({ data, allYears, mob }) {
                       return (
                         <td key={y} style={{ padding:mob?"4px 5px":"5px 7px", textAlign:"right" }}>
                           <div style={{ color:sec.color, fontWeight:500, fontSize:mob?10:11 }}>{val > 0 ? fmt(val) : "-"}</div>
-                          {c != null && val > 0 && (
-                            <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>
-                              {fmtP(c)}
-                            </div>
-                          )}
+                          {c != null && val > 0 && <div style={{ fontSize:9, color:c > 0 ? "#A32D2D" : "#3B6D11" }}>{fmtP(c)}</div>}
                         </td>
                       );
                     })}
@@ -636,10 +635,7 @@ function TabEntry({ stored, setStored, mob }) {
     const bySheet = {};
     fields.forEach(f => {
       const sn = FIELD_TO_SHEET[f];
-      if (sn && form[f] != null && form[f] !== "") {
-        bySheet[sn] = bySheet[sn] || {};
-        bySheet[sn][f] = Number(form[f]);
-      }
+      if (sn && form[f] != null && form[f] !== "") { bySheet[sn] = bySheet[sn] || {}; bySheet[sn][f] = Number(form[f]); }
     });
     const sheetSaves = Object.entries(bySheet).map(([sheet, data]) => ({ sheet, data }));
     await applyAndSave(patch, sheetSaves);
@@ -653,10 +649,7 @@ function TabEntry({ stored, setStored, mob }) {
     const bySheet = {};
     Object.keys(form).forEach(f => {
       const sn = FIELD_TO_SHEET[f];
-      if (sn && form[f] != null && form[f] !== "") {
-        bySheet[sn] = bySheet[sn] || {};
-        bySheet[sn][f] = Number(form[f]);
-      }
+      if (sn && form[f] != null && form[f] !== "") { bySheet[sn] = bySheet[sn] || {}; bySheet[sn][f] = Number(form[f]); }
     });
     const sheetSaves = Object.entries(bySheet).map(([sheet, data]) => ({ sheet, data }));
     await applyAndSave(patch, sheetSaves);
@@ -685,15 +678,13 @@ function TabEntry({ stored, setStored, mob }) {
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: "1.25rem", flexWrap: "wrap" }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <label style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>청구서 연도</label>
-          <select value={eYear} onChange={e => setEYear(e.target.value)}
-            style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
+          <select value={eYear} onChange={e => setEYear(e.target.value)} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
             {["2024","2025","2026","2027"].map(y => <option key={y} value={y}>{y}년</option>)}
           </select>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <label style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>청구서 월</label>
-          <select value={eMonth} onChange={e => setEMonth(e.target.value)}
-            style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
+          <select value={eMonth} onChange={e => setEMonth(e.target.value)} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 6, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-secondary)", color: "var(--color-text-primary)" }}>
             {MLABELS.map((m, i) => <option key={i} value={String(i+1).padStart(2,"0")}>{m}</option>)}
           </select>
         </div>
@@ -704,38 +695,25 @@ function TabEntry({ stored, setStored, mob }) {
           {eAccs.map(acc => {
             const ek = eYear + "-" + eMonth;
             const existCost = (EBASE[ek] || {})[acc.id + "_cost"];
-            const eFields = [
-              { f: acc.id+"_usage", label: "사용량", unit: "kWh", ph: "예: 2500" },
-              { f: acc.id+"_cost", label: "납부요금", unit: "원", ph: "예: 650000" },
-            ];
+            const eFields = [{ f: acc.id+"_usage", label: "사용량", unit: "kWh", ph: "예: 2500" }, { f: acc.id+"_cost", label: "납부요금", unit: "원", ph: "예: 650000" }];
             return (
               <div key={acc.id} style={{ background: "var(--color-background-primary)", border: "0.5px solid "+acc.bd+"40", borderRadius: 12, padding: "1rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "0.875rem" }}>
-                  <div style={{ width:32,height:32,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <div style={{ width:10,height:10,borderRadius:2,background:acc.color }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div>
-                    <div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div>
-                  </div>
+                  <div style={{ width:32,height:32,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:2,background:acc.color }} /></div>
+                  <div><div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div><div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div></div>
                   {existCost && <div style={{ marginLeft:"auto",fontSize:10,color:acc.color }}>기존: {fmt(existCost)}원</div>}
                 </div>
                 <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                   {eFields.map(field => (
                     <div key={field.f}>
                       <label style={{ fontSize:11,color:"var(--color-text-secondary)",display:"block",marginBottom:3 }}>{field.label} ({field.unit})</label>
-                      <input type="number" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""}
-                        onChange={ev => setForm(p => Object.assign({},p,{[field.f]:ev.target.value}))}
-                        style={{ width:"100%",padding:"7px 8px",fontSize:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
+                      <input type="number" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""} onChange={ev => setForm(p => Object.assign({},p,{[field.f]:ev.target.value}))} style={{ width:"100%",padding:"7px 8px",fontSize:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
                     </div>
                   ))}
                 </div>
                 <div style={{ marginTop:"0.75rem",display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8 }}>
                   {saved[acc.id+"_usage"] && <span style={{ fontSize:11,color:acc.color,fontWeight:500 }}>저장됨! ✓</span>}
-                  <button onClick={() => saveFields([acc.id+"_usage",acc.id+"_cost"], acc.id+"_usage")}
-                    style={{ padding:"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>
-                    {acc.label} 저장
-                  </button>
+                  <button onClick={() => saveFields([acc.id+"_usage",acc.id+"_cost"], acc.id+"_usage")} style={{ padding:"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>{acc.label} 저장</button>
                 </div>
               </div>
             );
@@ -748,39 +726,25 @@ function TabEntry({ stored, setStored, mob }) {
           {gAccs.map(acc => {
             const gk = eYear + "-" + eMonth;
             const existCost = (GBASE[gk] || {})[acc.id+"_cost"];
-            const gFields = [
-              { f:acc.id+"_usage", label:"사용량", unit:"m3", ph:"예: 20" },
-              { f:acc.id+"_heat", label:"사용열량", unit:"MJ", ph:"예: 845" },
-              { f:acc.id+"_cost", label:"결제금액", unit:"원", ph:"예: 22570" },
-            ];
+            const gFields = [{ f:acc.id+"_usage", label:"사용량", unit:"m3", ph:"예: 20" }, { f:acc.id+"_heat", label:"사용열량", unit:"MJ", ph:"예: 845" }, { f:acc.id+"_cost", label:"결제금액", unit:"원", ph:"예: 22570" }];
             return (
               <div key={acc.id} style={{ background:"var(--color-background-primary)",border:"0.5px solid "+acc.bd+"40",borderRadius:12,padding:"1rem" }}>
                 <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:"0.875rem" }}>
-                  <div style={{ width:32,height:32,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center" }}>
-                    <div style={{ width:10,height:10,borderRadius:2,background:acc.color }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div>
-                    <div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div>
-                  </div>
+                  <div style={{ width:32,height:32,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:2,background:acc.color }} /></div>
+                  <div><div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div><div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div></div>
                   {existCost && <div style={{ marginLeft:"auto",fontSize:10,color:acc.color }}>기존: {fmt(existCost)}원</div>}
                 </div>
                 <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8 }}>
                   {gFields.map(field => (
                     <div key={field.f}>
                       <label style={{ fontSize:11,color:"var(--color-text-secondary)",display:"block",marginBottom:3 }}>{field.label} ({field.unit})</label>
-                      <input type="number" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""}
-                        onChange={ev => setForm(p => Object.assign({},p,{[field.f]:ev.target.value}))}
-                        style={{ width:"100%",padding:"7px 8px",fontSize:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
+                      <input type="number" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""} onChange={ev => setForm(p => Object.assign({},p,{[field.f]:ev.target.value}))} style={{ width:"100%",padding:"7px 8px",fontSize:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
                     </div>
                   ))}
                 </div>
                 <div style={{ marginTop:"0.75rem",display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8 }}>
                   {saved[acc.id+"_usage"] && <span style={{ fontSize:11,color:acc.color,fontWeight:500 }}>저장됨! ✓</span>}
-                  <button onClick={() => saveFields([acc.id+"_usage",acc.id+"_heat",acc.id+"_cost"], acc.id+"_usage")}
-                    style={{ padding:"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>
-                    {acc.label} 저장
-                  </button>
+                  <button onClick={() => saveFields([acc.id+"_usage",acc.id+"_heat",acc.id+"_cost"], acc.id+"_usage")} style={{ padding:"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>{acc.label} 저장</button>
                 </div>
               </div>
             );
@@ -788,8 +752,7 @@ function TabEntry({ stored, setStored, mob }) {
         </div>
       </div>
       <div style={{ display:"flex",gap:12,alignItems:"center" }}>
-        <button onClick={saveAll}
-          style={{ padding:"10px 32px",fontSize:13,fontWeight:500,borderRadius:8,border:"none",background:"#534AB7",color:"#fff",cursor:"pointer",opacity:syncing?0.7:1 }}>
+        <button onClick={saveAll} style={{ padding:"10px 32px",fontSize:13,fontWeight:500,borderRadius:8,border:"none",background:"#534AB7",color:"#fff",cursor:"pointer",opacity:syncing?0.7:1 }}>
           {syncing ? "저장 중..." : saved.all ? "저장됨! ✓" : "전체 저장"}
         </button>
         {saved.all && <span style={{ fontSize:12,color:"#534AB7",fontWeight:500 }}>☁️ 구글 시트 저장 완료!</span>}
@@ -813,10 +776,7 @@ export default function App() {
   useEffect(() => {
     async function init() {
       let localData = {};
-      try {
-        const r = localStorage.getItem(SKEY);
-        if (r) localData = JSON.parse(r);
-      } catch (e) {}
+      try { const r = localStorage.getItem(SKEY); if (r) localData = JSON.parse(r); } catch (e) {}
       setStored(localData);
       setLoading(false);
       try {
@@ -827,9 +787,7 @@ export default function App() {
         setStored(merged);
         try { localStorage.setItem(SKEY, JSON.stringify(merged)); } catch (e) {}
         setSheetStatus("ok");
-      } catch (e) {
-        setSheetStatus("error");
-      }
+      } catch (e) { setSheetStatus("error"); }
     }
     init();
   }, []);
@@ -837,7 +795,6 @@ export default function App() {
   const data = merge(stored);
   const allYears = [...new Set(["2023","2024","2025","2026",...Object.keys(data).map(k => k.slice(0,4))])].sort();
   const prevYear = String(Number(selYear) - 1);
-
   useEffect(() => { setCliE(null); setCliG(null); }, [selYear]);
 
   const lmE = Math.max(lastM(data,selYear,"e1_cost"),lastM(data,selYear,"e2_cost"));
@@ -847,13 +804,25 @@ export default function App() {
   const isPartial = lmAll > 0 && lmAll < 12;
   const compareLabel = isPartial ? selYear+"년 1~"+upTo+"월 -> "+prevYear+"년 동일기간" : selYear+"년 전체 -> "+prevYear+"년 전체";
 
-  const tabSt = (id) => ({
-    padding: mob ? "8px 10px" : "8px 16px", fontSize: mob ? 12 : 13,
-    border: "none", background: "transparent", cursor: "pointer", whiteSpace: "nowrap",
-    color: tab === id ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-    borderBottom: tab === id ? "2px solid var(--color-text-primary)" : "2px solid transparent",
-    fontWeight: tab === id ? 500 : 400, marginBottom: -1
-  });
+  // ★ 컬러 탭 스타일
+  const tabSt = (id) => {
+    const tc = TAB_COLORS[id];
+    const isActive = tab === id;
+    return {
+      padding: mob ? "7px 9px" : "8px 16px",
+      fontSize: mob ? 11 : 13,
+      border: "none",
+      borderRadius: "6px 6px 0 0",
+      cursor: "pointer",
+      whiteSpace: "nowrap",
+      background: isActive ? tc.bg : "transparent",
+      color: isActive ? "#fff" : tc.text,
+      borderBottom: isActive ? "2px solid " + tc.bg : "2px solid transparent",
+      fontWeight: isActive ? 600 : 400,
+      marginBottom: -1,
+      transition: "background 0.15s, color 0.15s",
+    };
+  };
 
   if (loading) return <div style={{ padding:"2rem", color:"var(--color-text-secondary)" }}>불러오는 중...</div>;
 
@@ -875,16 +844,18 @@ export default function App() {
           </span>
         </div>
       </div>
-      <div style={{ display:"flex", gap:0, marginBottom:"1.25rem", borderBottom:"0.5px solid var(--color-border-tertiary)", overflowX:"auto" }}>
+
+      {/* ★ 컬러 탭 메뉴 */}
+      <div style={{ display:"flex", gap:2, marginBottom:"1.25rem", borderBottom:"1px solid var(--color-border-tertiary)", overflowX:"auto" }}>
         {[["main","통합 현황"],["elec","전기요금"],["gas","가스요금"],["compare","연도 비교"],["entry","데이터 입력"]].map(item => (
           <button key={item[0]} onClick={() => setTab(item[0])} style={tabSt(item[0])}>{item[1]}</button>
         ))}
       </div>
+
       {(tab==="main"||tab==="elec"||tab==="gas") && (
         <div style={{ display:"flex", gap:10, alignItems:"center", marginBottom:"1rem", flexWrap:"wrap" }}>
           <label style={{ fontSize:12, color:"var(--color-text-secondary)" }}>조회 연도</label>
-          <select value={selYear} onChange={e => setSelYear(e.target.value)}
-            style={{ fontSize:13, padding:"4px 10px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-secondary)", color:"var(--color-text-primary)" }}>
+          <select value={selYear} onChange={e => setSelYear(e.target.value)} style={{ fontSize:13, padding:"4px 10px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-secondary)", color:"var(--color-text-primary)" }}>
             {allYears.map(y => <option key={y} value={y}>{y}년</option>)}
           </select>
           {lmAll > 0 && (
@@ -894,11 +865,11 @@ export default function App() {
           )}
         </div>
       )}
-      {tab==="main" && <TabMain data={data} selYear={selYear} prevYear={prevYear} allYears={allYears} mob={mob} lmAll={lmAll} upTo={upTo} isPartial={isPartial} />}
-      {tab==="elec" && <TabElec data={data} selYear={selYear} prevYear={prevYear} mob={mob} lmE={lmE} cliE={cliE} setCliE={setCliE} />}
-      {tab==="gas" && <TabGas data={data} selYear={selYear} prevYear={prevYear} mob={mob} lmG={lmG} cliG={cliG} setCliG={setCliG} />}
+      {tab==="main"    && <TabMain data={data} selYear={selYear} prevYear={prevYear} allYears={allYears} mob={mob} lmAll={lmAll} upTo={upTo} isPartial={isPartial} />}
+      {tab==="elec"    && <TabElec data={data} selYear={selYear} prevYear={prevYear} mob={mob} lmE={lmE} cliE={cliE} setCliE={setCliE} />}
+      {tab==="gas"     && <TabGas  data={data} selYear={selYear} prevYear={prevYear} mob={mob} lmG={lmG} cliG={cliG} setCliG={setCliG} />}
       {tab==="compare" && <TabCompare data={data} allYears={allYears} mob={mob} />}
-      {tab==="entry" && <TabEntry stored={stored} setStored={setStored} mob={mob} />}
+      {tab==="entry"   && <TabEntry stored={stored} setStored={setStored} mob={mob} />}
     </div>
   );
 }
