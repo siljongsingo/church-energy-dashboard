@@ -24,7 +24,7 @@ const TAB_COLORS = {
   entry:   { bg: "#E24B4A", text: "#A32D2D" },
 };
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzY0CeMquiKZ3uF9qfvL188fMmrE61vA-P-Ke29z2w3uEoVEZMGv8ek07gQtVaB9Fix/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqHsykBGEyQOlgfuNuM04d8iQun0xgVLaQ8wzFjFfpV2esJzwg7W6rpdP1y94lYCZm/exec";
 
 const SHEET_CONFIG = [
   { name: "기본전기",       fields: ["e1_usage","e1_cost"] },
