@@ -635,24 +635,24 @@ function TabEntry({ stored, setStored, mob }) {
   }
 
   return (
-    <div>
-      <div style={{ background:"#E6F1FB", border:"0.5px solid #B5D4F4", borderRadius:8, padding:"10px 14px", marginBottom:"1rem", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
-        <div>
-          <span style={{ fontSize:13, color:"#0C447C", fontWeight:500 }}>[청구서] {eYear}년 {bm}월 입력</span>
-          <span style={{ fontSize:12, color:"#185FA5", marginLeft:10 }}>→ <strong>{uy}년 {um}월 사용량</strong>으로 반영</span>
+    <div style={{ maxWidth:"100%", overflowX:"hidden" }}>
+      <div style={{ background:"#E6F1FB", border:"0.5px solid #B5D4F4", borderRadius:8, padding:"10px 14px", marginBottom:"1rem" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          <span style={{ fontSize:mob?12:13, color:"#0C447C", fontWeight:500 }}>[청구서] {eYear}년 {bm}월 입력</span>
+          <span style={{ fontSize:mob?11:12, color:"#185FA5" }}>→ <strong>{uy}년 {um}월 사용량</strong>으로 반영</span>
         </div>
-        {syncing && <span style={{ fontSize:11, color:"#534AB7", fontWeight:500 }}>☁️ 구글 시트 저장 중...</span>}
+        {syncing && <div style={{ fontSize:11, color:"#534AB7", fontWeight:500, marginTop:4 }}>☁️ 구글 시트 저장 중...</div>}
       </div>
-      <div style={{ display:"flex", gap:12, alignItems:"center", marginBottom:"1.25rem", flexWrap:"wrap" }}>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <label style={{ fontSize:12, color:"var(--color-text-secondary)" }}>청구서 연도</label>
-          <select value={eYear} onChange={e=>setEYear(e.target.value)} style={{ fontSize:13, padding:"4px 10px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-secondary)", color:"var(--color-text-primary)" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:"1.25rem" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          <label style={{ fontSize:11, color:"var(--color-text-secondary)" }}>청구서 연도</label>
+          <select value={eYear} onChange={e=>setEYear(e.target.value)} style={{ fontSize:13, padding:"6px 8px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-secondary)", color:"var(--color-text-primary)", width:"100%" }}>
             {["2024","2025","2026","2027"].map(y=><option key={y} value={y}>{y}년</option>)}
           </select>
         </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <label style={{ fontSize:12, color:"var(--color-text-secondary)" }}>청구서 월</label>
-          <select value={eMonth} onChange={e=>setEMonth(e.target.value)} style={{ fontSize:13, padding:"4px 10px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-secondary)", color:"var(--color-text-primary)" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+          <label style={{ fontSize:11, color:"var(--color-text-secondary)" }}>청구서 월</label>
+          <select value={eMonth} onChange={e=>setEMonth(e.target.value)} style={{ fontSize:13, padding:"6px 8px", borderRadius:6, border:"0.5px solid var(--color-border-secondary)", background:"var(--color-background-secondary)", color:"var(--color-text-primary)", width:"100%" }}>
             {MLABELS.map((m,i)=><option key={i} value={String(i+1).padStart(2,"0")}>{m}월</option>)}
           </select>
         </div>
@@ -665,23 +665,23 @@ function TabEntry({ stored, setStored, mob }) {
             const existCost = (EBASE[ek]||{})[acc.id+"_cost"];
             const eFields = [{f:acc.id+"_usage",label:"사용량",unit:"kWh",ph:"예: 2500"},{f:acc.id+"_cost",label:"납부요금",unit:"원",ph:"예: 650000"}];
             return (
-              <div key={acc.id} style={{ background:"var(--color-background-primary)", border:"0.5px solid "+acc.bd+"40", borderRadius:12, padding:"1rem" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:"0.875rem" }}>
-                  <div style={{ width:32,height:32,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:2,background:acc.color }} /></div>
-                  <div><div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div><div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div></div>
-                  {existCost&&<div style={{ marginLeft:"auto",fontSize:10,color:acc.color }}>기존: {fmt(existCost)}원</div>}
+              <div key={acc.id} style={{ background:"var(--color-background-primary)", border:"0.5px solid "+acc.bd+"40", borderRadius:12, padding:"0.875rem" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:"0.75rem" }}>
+                  <div style={{ width:30,height:30,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><div style={{ width:10,height:10,borderRadius:2,background:acc.color }} /></div>
+                  <div style={{ minWidth:0 }}><div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div><div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div></div>
+                  {existCost&&<div style={{ marginLeft:"auto",fontSize:10,color:acc.color,flexShrink:0 }}>기존: {fmt(existCost)}원</div>}
                 </div>
                 <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
                   {eFields.map(field=>(
                     <div key={field.f}>
-                      <label style={{ fontSize:11,color:"var(--color-text-secondary)",display:"block",marginBottom:3 }}>{field.label} ({field.unit})</label>
-                      <input type="number" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""} onChange={ev=>setForm(p=>Object.assign({},p,{[field.f]:ev.target.value}))} style={{ width:"100%",padding:"7px 8px",fontSize:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
+                      <label style={{ fontSize:11,color:"var(--color-text-secondary)",display:"block",marginBottom:3 }}>{field.label} <span style={{ color:"var(--color-text-tertiary)" }}>({field.unit})</span></label>
+                      <input type="number" inputMode="numeric" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""} onChange={ev=>setForm(p=>Object.assign({},p,{[field.f]:ev.target.value}))} style={{ width:"100%",padding:"8px",fontSize:mob?14:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
                     </div>
                   ))}
                 </div>
                 <div style={{ marginTop:"0.75rem",display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8 }}>
                   {saved[acc.id+"_usage"]&&<span style={{ fontSize:11,color:acc.color,fontWeight:500 }}>저장됨! ✓</span>}
-                  <button onClick={()=>saveFields([acc.id+"_usage",acc.id+"_cost"],acc.id+"_usage")} style={{ padding:"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>{acc.label} 저장</button>
+                  <button onClick={()=>saveFields([acc.id+"_usage",acc.id+"_cost"],acc.id+"_usage")} style={{ padding:mob?"9px 16px":"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>{acc.label} 저장</button>
                 </div>
               </div>
             );
@@ -696,35 +696,35 @@ function TabEntry({ stored, setStored, mob }) {
             const existCost = (GBASE[gk]||{})[acc.id+"_cost"];
             const gFields = [{f:acc.id+"_usage",label:"사용량",unit:"m3",ph:"예: 20"},{f:acc.id+"_heat",label:"사용열량",unit:"MJ",ph:"예: 845"},{f:acc.id+"_cost",label:"결제금액",unit:"원",ph:"예: 22570"}];
             return (
-              <div key={acc.id} style={{ background:"var(--color-background-primary)",border:"0.5px solid "+acc.bd+"40",borderRadius:12,padding:"1rem" }}>
-                <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:"0.875rem" }}>
-                  <div style={{ width:32,height:32,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center" }}><div style={{ width:10,height:10,borderRadius:2,background:acc.color }} /></div>
-                  <div><div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div><div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div></div>
-                  {existCost&&<div style={{ marginLeft:"auto",fontSize:10,color:acc.color }}>기존: {fmt(existCost)}원</div>}
+              <div key={acc.id} style={{ background:"var(--color-background-primary)",border:"0.5px solid "+acc.bd+"40",borderRadius:12,padding:"0.875rem" }}>
+                <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:"0.75rem" }}>
+                  <div style={{ width:30,height:30,borderRadius:8,background:acc.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><div style={{ width:10,height:10,borderRadius:2,background:acc.color }} /></div>
+                  <div style={{ minWidth:0 }}><div style={{ fontSize:13,fontWeight:500 }}>{acc.label}</div><div style={{ fontSize:10,color:"var(--color-text-tertiary)" }}>{acc.sub}</div></div>
+                  {existCost&&<div style={{ marginLeft:"auto",fontSize:10,color:acc.color,flexShrink:0 }}>기존: {fmt(existCost)}원</div>}
                 </div>
-                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8 }}>
-                  {gFields.map(field=>(
-                    <div key={field.f}>
-                      <label style={{ fontSize:11,color:"var(--color-text-secondary)",display:"block",marginBottom:3 }}>{field.label} ({field.unit})</label>
-                      <input type="number" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""} onChange={ev=>setForm(p=>Object.assign({},p,{[field.f]:ev.target.value}))} style={{ width:"100%",padding:"7px 8px",fontSize:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
+                <div style={{ display:"grid",gridTemplateColumns:mob?"1fr 1fr":"1fr 1fr 1fr",gap:8 }}>
+                  {gFields.map((field,fi)=>(
+                    <div key={field.f} style={mob&&fi===2?{gridColumn:"1/3"}:{}}>
+                      <label style={{ fontSize:11,color:"var(--color-text-secondary)",display:"block",marginBottom:3 }}>{field.label} <span style={{ color:"var(--color-text-tertiary)" }}>({field.unit})</span></label>
+                      <input type="number" inputMode="numeric" placeholder={field.ph} value={form[field.f]!=null?form[field.f]:""} onChange={ev=>setForm(p=>Object.assign({},p,{[field.f]:ev.target.value}))} style={{ width:"100%",padding:"8px",fontSize:mob?14:12,borderRadius:6,border:"0.5px solid var(--color-border-secondary)",background:"var(--color-background-secondary)",color:"var(--color-text-primary)",boxSizing:"border-box" }} />
                     </div>
                   ))}
                 </div>
                 <div style={{ marginTop:"0.75rem",display:"flex",justifyContent:"flex-end",alignItems:"center",gap:8 }}>
                   {saved[acc.id+"_usage"]&&<span style={{ fontSize:11,color:acc.color,fontWeight:500 }}>저장됨! ✓</span>}
-                  <button onClick={()=>saveFields([acc.id+"_usage",acc.id+"_heat",acc.id+"_cost"],acc.id+"_usage")} style={{ padding:"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>{acc.label} 저장</button>
+                  <button onClick={()=>saveFields([acc.id+"_usage",acc.id+"_heat",acc.id+"_cost"],acc.id+"_usage")} style={{ padding:mob?"9px 16px":"6px 16px",fontSize:12,fontWeight:500,borderRadius:6,border:"0.5px solid "+acc.bd,background:"transparent",color:acc.color,cursor:"pointer" }}>{acc.label} 저장</button>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
-      <div style={{ display:"flex",gap:12,alignItems:"center" }}>
-        <button onClick={saveAll} style={{ padding:"10px 32px",fontSize:13,fontWeight:500,borderRadius:8,border:"none",background:"#534AB7",color:"#fff",cursor:"pointer",opacity:syncing?0.7:1 }}>
+      <div style={{ display:"flex",flexDirection:mob?"column":"row",gap:10,alignItems:mob?"stretch":"center" }}>
+        <button onClick={saveAll} style={{ padding:"11px 32px",fontSize:13,fontWeight:600,borderRadius:8,border:"none",background:"#534AB7",color:"#fff",cursor:"pointer",opacity:syncing?0.7:1 }}>
           {syncing?"저장 중...":saved.all?"저장됨! ✓":"전체 저장"}
         </button>
-        {saved.all&&<span style={{ fontSize:12,color:"#534AB7",fontWeight:500 }}>☁️ 구글 시트 저장 완료!</span>}
-        <span style={{ fontSize:10,color:"var(--color-text-tertiary)",marginLeft:"auto" }}>전기/가스 모두 사용월 기준 (청구월 - 1개월)</span>
+        {saved.all&&<span style={{ fontSize:12,color:"#534AB7",fontWeight:500,textAlign:"center" }}>☁️ 구글 시트 저장 완료!</span>}
+        <span style={{ fontSize:10,color:"var(--color-text-tertiary)",marginLeft:mob?0:"auto",textAlign:mob?"center":"right" }}>전기/가스 모두 사용월 기준 (청구월 - 1개월)</span>
       </div>
     </div>
   );
