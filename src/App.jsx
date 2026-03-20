@@ -807,4 +807,4 @@ export default function App() {
   const [tab, setTab] = useState("main");
   const [stored, setStored] = useState({});
   const [loading, setLoading] = useState(true);
-  const [sheetStatus, setSheetStatus] = useState("load
+  const [sheetStatus, setSheetStatus] = useState("loading");
