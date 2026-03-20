@@ -906,8 +906,4 @@ export default function App() {
     </div>
   );
 }
-    <div style={{ fontFamily:"var(--font-sans)", maxWidth:980, margin:"0 auto", padding:mob?"0.75rem 0.75rem 3rem":"1rem 1rem 3rem" }}>
-      <div style={{ marginBottom:"1rem", display:"flex", alignItems:"flex-start", justifyContent:"space-between", flexDirection:mob?"column":"row", gap:8 }}>
-        <div>
-          <div style={{ fontSize:10, color:"var(--color-text-tertiary)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>행복한교회 에너지 관리시스템</div>
-          <h1 style={{ fontSize:m
+  
