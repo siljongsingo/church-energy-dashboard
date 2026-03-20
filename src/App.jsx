@@ -838,9 +838,9 @@ export default function App() {
             <span key={i} style={{ fontSize:10, padding:"3px 8px", borderRadius:20, background:i<2?"#E6F1FB":"#E1F5EE", color:i<2?"#0C447C":"#085041", fontWeight:500 }}>{t}</span>
           ))}
           <span style={{ fontSize:10, padding:"3px 8px", borderRadius:20, fontWeight:500,
-            background:sheetStatus==="ok"?"#E1F5EE":sheetStatus==="error"?"#FCEBEB":"#F5F5F5",
-            color:sheetStatus==="ok"?"#085041":sheetStatus==="error"?"#A32D2D":"#888" }}>
-            {sheetStatus==="ok"?"☁️ 시트 연결됨":sheetStatus==="error"?"⚠️ 시트 연결 실패":"☁️ 연결 중..."}
+            background:sheetStatus==="ok"?"#1a1a1a":sheetStatus==="error"?"#FCEBEB":"#F5F5F5",
+            color:sheetStatus==="ok"?"#ffffff":sheetStatus==="error"?"#A32D2D":"#888"
+            {sheetStatus==="ok"?"☁️ DATA시트 연결됨":sheetStatus==="error"?"⚠️ 시트 연결 실패":"☁️ 연결 중..."}
           </span>
         </div>
       </div>
